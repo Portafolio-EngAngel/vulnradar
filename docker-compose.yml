@@ -1,0 +1,63 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: vulnradar
+      POSTGRES_USER: vulnradar
+      POSTGRES_PASSWORD: vulnradar
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vulnradar"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: ./vulnradar_project
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://vulnradar:vulnradar@db:5432/vulnradar
+      REDIS_URL: redis://redis:6379/0
+      DEBUG: "False"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./vulnradar_project:/app
+    command: >
+      sh -c "python manage.py migrate &&
+             gunicorn vulnradar.wsgi:application --bind 0.0.0.0:8000 --workers 2"
+
+  worker:
+    build: ./vulnradar_project
+    environment:
+      DATABASE_URL: postgresql://vulnradar:vulnradar@db:5432/vulnradar
+      REDIS_URL: redis://redis:6379/0
+      DEBUG: "False"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./vulnradar_project:/app
+    command: celery -A vulnradar worker --loglevel=info
+
+volumes:
+  postgres_data:

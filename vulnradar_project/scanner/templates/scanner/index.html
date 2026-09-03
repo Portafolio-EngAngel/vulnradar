@@ -1,0 +1,119 @@
+{% extends "scanner/base.html" %}
+
+{% block title %}VulnRadar — Scan for Security Vulnerabilities{% endblock %}
+
+{% block content %}
+
+<!-- Hero -->
+<section class="bg-gradient-to-br from-gray-950 via-red-950/20 to-gray-950 pt-20 pb-12 px-6 text-center">
+  <div class="max-w-2xl mx-auto">
+    <span class="inline-block bg-red-900/40 text-red-400 border border-red-800/60 text-xs font-semibold tracking-widest uppercase px-3 py-1 rounded-full mb-6">
+      Free &amp; Open Source
+    </span>
+    <h1 class="text-4xl sm:text-5xl font-bold text-white leading-tight mb-4 tracking-tight">
+      Scan any URL for<br>
+      <span class="text-red-400">security vulnerabilities</span>
+    </h1>
+    <p class="text-lg text-gray-400 leading-relaxed max-w-xl mx-auto">
+      Checks OWASP Top 10 security headers, SSL/TLS, cookies, and information disclosure — in seconds.
+    </p>
+  </div>
+</section>
+
+<!-- Scan card -->
+<section class="px-6 pb-12 -mt-4">
+  <div class="bg-gray-900 border border-gray-800 rounded-2xl p-8 max-w-xl mx-auto shadow-2xl shadow-black/40">
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="mb-5 px-4 py-3 rounded-xl text-sm flex items-start gap-3
+          {% if message.tags == 'error' %}bg-red-900/40 border border-red-800/60 text-red-300
+          {% else %}bg-blue-900/40 border border-blue-800/60 text-blue-300{% endif %}">
+          <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <form method="POST" action="{% url 'create_scan' %}" novalidate>
+      {% csrf_token %}
+
+      <div class="mb-6">
+        <label for="url" class="block text-sm font-medium text-gray-300 mb-2">
+          Target URL
+        </label>
+        <input
+          type="url"
+          id="url"
+          name="url"
+          placeholder="https://example.com"
+          required
+          autocomplete="off"
+          spellcheck="false"
+          class="w-full bg-gray-800 border border-gray-700 text-gray-100 placeholder-gray-500
+                 rounded-xl px-4 py-3 text-sm font-mono
+                 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent
+                 transition-all duration-200 hover:border-gray-600"
+        >
+        <p class="mt-2 text-xs text-gray-600">Include the full URL with protocol (https://)</p>
+      </div>
+
+      <button
+        type="submit"
+        id="scan-btn"
+        class="w-full bg-red-600 hover:bg-red-500 active:scale-95 hover:scale-[1.01] disabled:bg-red-900/40 disabled:cursor-not-allowed
+               text-white font-semibold rounded-xl px-6 py-3 text-sm tracking-wide
+               transition-all duration-200 shadow-lg shadow-red-900/30
+               focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-gray-900
+               flex items-center justify-center gap-2"
+      >
+        <span id="scan-btn-label">Start Scan &rarr;</span>
+        <svg id="scan-spinner" class="hidden animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+      </button>
+    </form>
+    <script>
+      document.querySelector('form').addEventListener('submit', function () {
+        var btn = document.getElementById('scan-btn');
+        var label = document.getElementById('scan-btn-label');
+        var spinner = document.getElementById('scan-spinner');
+        btn.disabled = true;
+        label.textContent = 'Starting scan…';
+        spinner.classList.remove('hidden');
+      });
+    </script>
+  </div>
+</section>
+
+<!-- Feature pills -->
+<section class="pb-20 px-6">
+  <div class="flex flex-wrap items-center justify-center gap-3 max-w-xl mx-auto">
+    <span class="flex items-center gap-2 bg-gray-900 border border-gray-800 hover:border-gray-700 text-gray-400
+                 text-sm px-4 py-2 rounded-full transition-colors duration-200">
+      <svg class="w-3.5 h-3.5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" />
+      </svg>
+      Async scanning
+    </span>
+    <span class="flex items-center gap-2 bg-gray-900 border border-gray-800 hover:border-gray-700 text-gray-400
+                 text-sm px-4 py-2 rounded-full transition-colors duration-200">
+      <svg class="w-3.5 h-3.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+      </svg>
+      OWASP checks
+    </span>
+    <span class="flex items-center gap-2 bg-gray-900 border border-gray-800 hover:border-gray-700 text-gray-400
+                 text-sm px-4 py-2 rounded-full transition-colors duration-200">
+      <svg class="w-3.5 h-3.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+      Detailed report
+    </span>
+  </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,235 @@
+{% extends "scanner/base.html" %}
+
+{% block title %}
+  {% if scan.status == 'completed' %}
+    Results — {{ scan.url }} &middot; VulnRadar
+  {% else %}
+    Scanning… &middot; VulnRadar
+  {% endif %}
+{% endblock %}
+
+{% block extra_head %}
+  {% if scan.status == 'pending' or scan.status == 'running' %}
+    <meta http-equiv="refresh" content="3">
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-6 py-12">
+
+  <!-- ── PENDING / RUNNING ──────────────────────────────────────────────── -->
+  {% if scan.status == 'pending' or scan.status == 'running' %}
+
+  <div class="bg-gray-900 border border-gray-800 rounded-2xl p-12 text-center shadow-2xl shadow-black/40" aria-live="polite" aria-busy="true">
+    <div class="flex justify-center mb-6">
+      <div class="relative">
+        <div class="w-14 h-14 rounded-full border-2 border-gray-800"></div>
+        <div class="absolute inset-0 w-14 h-14 border-2 border-red-500 border-t-transparent rounded-full animate-spin" role="status" aria-label="Scanning in progress"></div>
+      </div>
+    </div>
+
+    <h2 class="text-xl font-semibold text-white mb-2 tracking-tight">
+      Scanning
+      <span class="text-red-400 break-all font-mono text-base">{{ scan.url }}</span>&hellip;
+    </h2>
+    <p class="text-sm text-gray-500 mb-6">
+      This may take a few seconds. The page will refresh automatically.
+    </p>
+
+    <span class="inline-block bg-amber-900/40 text-amber-400 border border-amber-700/60
+                 text-xs font-bold tracking-widest uppercase px-4 py-1.5 rounded-full">
+      {{ scan.status|upper }}
+    </span>
+  </div>
+
+  <!-- ── FAILED ─────────────────────────────────────────────────────────── -->
+  {% elif scan.status == 'failed' %}
+
+  <div class="bg-red-900/10 border border-red-800/50 rounded-2xl p-12 text-center shadow-2xl shadow-black/40">
+    <div class="flex justify-center mb-6">
+      <div class="w-16 h-16 rounded-full bg-red-900/40 border border-red-700/60 flex items-center justify-center">
+        <svg class="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+        </svg>
+      </div>
+    </div>
+    <h2 class="text-xl font-semibold text-red-300 mb-2 tracking-tight">Scan Failed</h2>
+    <p class="text-sm text-gray-400 mb-8 max-w-sm mx-auto">
+      The scan could not be completed. The URL may be unreachable or refused the connection.
+    </p>
+    <a href="{% url 'index' %}"
+       class="inline-flex items-center gap-2 bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-gray-600
+              text-gray-300 text-sm font-medium px-6 py-2.5 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95">
+      &larr; Try another URL
+    </a>
+  </div>
+
+  <!-- ── COMPLETED ──────────────────────────────────────────────────────── -->
+  {% elif scan.status == 'completed' %}
+
+  <!-- Summary header -->
+  <div class="mb-8">
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-5">
+      <div>
+        <h1 class="text-xl font-bold text-white break-all font-mono">{{ scan.url }}</h1>
+        {% if scan.completed_at %}
+          <p class="text-sm text-gray-500 mt-1.5">
+            Completed {{ scan.completed_at|date:"N j, Y \a\t g:i A" }}
+          </p>
+        {% endif %}
+      </div>
+      <span class="inline-flex flex-shrink-0 items-center gap-1.5 bg-emerald-900/30 text-emerald-400 border border-emerald-800/60
+                   text-xs font-bold tracking-widest uppercase px-3 py-1.5 rounded-full self-start">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span>
+        COMPLETED
+      </span>
+    </div>
+
+    <p class="text-sm text-gray-400">
+      {% with findings|length as total %}
+        {% if total == 0 %}
+          No findings detected — clean result.
+        {% elif total == 1 %}
+          1 finding detected.
+        {% else %}
+          {{ total }} findings detected.
+        {% endif %}
+      {% endwith %}
+    </p>
+  </div>
+
+  <!-- Severity summary pills -->
+  {% if findings %}
+  {% set ns = namespace(critical=0, high=0, medium=0, low=0, info=0) %}
+  {% for finding in findings %}
+    {% if finding.severity == 'critical' %}{% set ns.critical = ns.critical + 1 %}
+    {% elif finding.severity == 'high' %}{% set ns.high = ns.high + 1 %}
+    {% elif finding.severity == 'medium' %}{% set ns.medium = ns.medium + 1 %}
+    {% elif finding.severity == 'low' %}{% set ns.low = ns.low + 1 %}
+    {% else %}{% set ns.info = ns.info + 1 %}{% endif %}
+  {% endfor %}
+  <div class="flex flex-wrap gap-2 mb-8">
+    {% if ns.critical > 0 %}
+      <span class="inline-flex items-center gap-1.5 bg-red-900/40 text-red-400 border border-red-800/60 text-xs font-semibold px-3 py-1.5 rounded-full">
+        <span class="w-1.5 h-1.5 rounded-full bg-red-400 inline-block"></span>Critical &times; {{ ns.critical }}
+      </span>
+    {% endif %}
+    {% if ns.high > 0 %}
+      <span class="inline-flex items-center gap-1.5 bg-orange-900/40 text-orange-400 border border-orange-800/60 text-xs font-semibold px-3 py-1.5 rounded-full">
+        <span class="w-1.5 h-1.5 rounded-full bg-orange-400 inline-block"></span>High &times; {{ ns.high }}
+      </span>
+    {% endif %}
+    {% if ns.medium > 0 %}
+      <span class="inline-flex items-center gap-1.5 bg-amber-900/40 text-amber-400 border border-amber-800/60 text-xs font-semibold px-3 py-1.5 rounded-full">
+        <span class="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block"></span>Medium &times; {{ ns.medium }}
+      </span>
+    {% endif %}
+    {% if ns.low > 0 %}
+      <span class="inline-flex items-center gap-1.5 bg-blue-900/40 text-blue-400 border border-blue-800/60 text-xs font-semibold px-3 py-1.5 rounded-full">
+        <span class="w-1.5 h-1.5 rounded-full bg-blue-400 inline-block"></span>Low &times; {{ ns.low }}
+      </span>
+    {% endif %}
+    {% if ns.info > 0 %}
+      <span class="inline-flex items-center gap-1.5 bg-gray-800 text-gray-400 border border-gray-700 text-xs font-semibold px-3 py-1.5 rounded-full">
+        <span class="w-1.5 h-1.5 rounded-full bg-gray-500 inline-block"></span>Info &times; {{ ns.info }}
+      </span>
+    {% endif %}
+  </div>
+
+  <!-- Findings list -->
+  <div class="space-y-3 mb-10">
+    {% for finding in findings %}
+    <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 hover:border-gray-700 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20 transition-all duration-200">
+
+      <!-- Top row: severity badge + category chip -->
+      <div class="flex flex-wrap items-center gap-2 mb-3">
+        {% if finding.severity == 'critical' %}
+          <span class="bg-red-900/40 text-red-400 border border-red-800/60 text-xs font-bold uppercase tracking-wide px-2.5 py-1 rounded-lg">
+            Critical
+          </span>
+        {% elif finding.severity == 'high' %}
+          <span class="bg-orange-900/40 text-orange-400 border border-orange-800/60 text-xs font-bold uppercase tracking-wide px-2.5 py-1 rounded-lg">
+            High
+          </span>
+        {% elif finding.severity == 'medium' %}
+          <span class="bg-amber-900/40 text-amber-400 border border-amber-800/60 text-xs font-bold uppercase tracking-wide px-2.5 py-1 rounded-lg">
+            Medium
+          </span>
+        {% elif finding.severity == 'low' %}
+          <span class="bg-blue-900/40 text-blue-400 border border-blue-800/60 text-xs font-bold uppercase tracking-wide px-2.5 py-1 rounded-lg">
+            Low
+          </span>
+        {% else %}
+          <span class="bg-gray-800 text-gray-400 border border-gray-700 text-xs font-bold uppercase tracking-wide px-2.5 py-1 rounded-lg">
+            Info
+          </span>
+        {% endif %}
+
+        {% if finding.category %}
+          <span class="bg-gray-800/60 text-gray-400 text-xs px-2.5 py-1 rounded-lg border border-gray-700/60">
+            {{ finding.category }}
+          </span>
+        {% endif %}
+      </div>
+
+      <!-- Title -->
+      <h3 class="text-white font-semibold text-base mb-1.5">{{ finding.title }}</h3>
+
+      <!-- Description -->
+      {% if finding.description %}
+        <p class="text-gray-400 text-sm leading-relaxed mb-3">{{ finding.description }}</p>
+      {% endif %}
+
+      <!-- Collapsible remediation -->
+      {% if finding.remediation %}
+        <details class="group">
+          <summary class="cursor-pointer text-sm text-red-400 hover:text-red-300 font-medium
+                          select-none list-none flex items-center gap-1.5 transition-colors duration-200 w-fit">
+            <svg class="w-3.5 h-3.5 transition-transform duration-200 group-open:rotate-90" fill="none"
+                 stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+            How to fix
+          </summary>
+          <div class="mt-3 pl-5 border-l-2 border-red-900/60">
+            <p class="text-gray-300 text-sm leading-relaxed">{{ finding.remediation }}</p>
+          </div>
+        </details>
+      {% endif %}
+
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <!-- No findings — success state -->
+  <div class="bg-emerald-900/10 border border-emerald-800/50 rounded-2xl p-12 text-center mb-10">
+    <div class="flex justify-center mb-5">
+      <div class="w-16 h-16 rounded-full bg-emerald-900/40 border border-emerald-700/60 flex items-center justify-center">
+        <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+    </div>
+    <h2 class="text-xl font-semibold text-emerald-300 mb-2 tracking-tight">No vulnerabilities found</h2>
+    <p class="text-sm text-gray-400 max-w-sm mx-auto">Strong security posture. No issues were detected during this scan.</p>
+  </div>
+  {% endif %}
+
+  <!-- Back CTA -->
+  <div class="text-center">
+    <a href="{% url 'index' %}"
+       class="inline-flex items-center gap-2 bg-red-600 hover:bg-red-500 active:scale-95 hover:scale-105
+              text-white text-sm font-semibold px-6 py-3 rounded-xl
+              transition-all duration-200 shadow-lg shadow-red-900/30
+              focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 focus:ring-offset-gray-950">
+      &larr; Run Another Scan
+    </a>
+  </div>
+
+  {% endif %}
+  <!-- ── end status blocks ──────────────────────────────────────────────── -->
+
+</div>
+{% endblock %}

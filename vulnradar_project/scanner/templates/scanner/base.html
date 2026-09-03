@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}VulnRadar — OWASP Security Scanner{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            gray: { 950: '#030712' }
+          },
+          animation: {
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          }
+        }
+      }
+    }
+  </script>
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen flex flex-col">
+
+  <!-- Header / Navbar -->
+  <header class="border-b border-gray-800/60 bg-gray-950/80 backdrop-blur-sm sticky top-0 z-50">
+    <div class="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+      <a href="{% url 'index' %}" class="flex items-center gap-3 group">
+        <div class="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-red-500 transition-colors duration-200">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+        </div>
+        <div class="leading-none">
+          <span class="text-lg font-bold text-white group-hover:text-gray-200 transition-colors duration-200">Vuln</span><span
+            class="text-lg font-bold text-red-400 group-hover:text-red-300 transition-colors duration-200">Radar</span>
+          <p class="text-xs text-gray-600 tracking-widest uppercase mt-0.5">OWASP Security Scanner</p>
+        </div>
+      </a>
+      <nav class="flex items-center gap-6">
+        <a href="{% url 'index' %}"
+          class="text-sm text-gray-400 hover:text-white transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 rounded px-2 py-1">
+          New Scan
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main content -->
+  <main class="flex-1">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-gray-800/60 bg-gray-900/20 mt-auto">
+    <div class="max-w-5xl mx-auto px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <p class="text-xs text-gray-600">
+        Built with
+        <span class="text-gray-500">Python</span>
+        <span class="text-gray-700 mx-1">&middot;</span>
+        <span class="text-gray-500">Django</span>
+        <span class="text-gray-700 mx-1">&middot;</span>
+        <span class="text-gray-500">Celery</span>
+      </p>
+      <p class="text-xs text-gray-700">VulnRadar &copy; 2025</p>
+    </div>
+  </footer>
+
+</body>
+</html>
