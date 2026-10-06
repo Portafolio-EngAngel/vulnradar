@@ -25,7 +25,7 @@ Scan any URL for security vulnerabilities across the OWASP Top 10. Async scannin
 ## Quick Start
 
 ```bash
-git clone https://github.com/EngAngel/vulnradar.git
+git clone https://github.com/Portafolio-EngAngel/vulnradar.git
 cd vulnradar
 docker compose up --build
 # open http://localhost:8000
